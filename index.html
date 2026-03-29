@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE 智慧接單助手 — AI 自動解析訂單，告別手抄</title>
+    <meta name="description" content="客戶照常用 LINE 下單，AI 自動幫你整理成正式訂單。每天省 2-3 小時人工抄單時間，漏單率降到零。免費試用 14 天。">
+    <meta property="og:title" content="LINE 智慧接單助手 — AI 自動解析訂單">
+    <meta property="og:description" content="客戶照常用 LINE 下單，AI 自動幫你整理成正式訂單。每天省 2-3 小時。">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #06C755;
+            --primary-dark: #05a648;
+            --primary-light: #e8f9ef;
+            --accent: #4A90D9;
+            --dark: #1a1a2e;
+            --gray-900: #111827;
+            --gray-700: #374151;
+            --gray-500: #6b7280;
+            --gray-300: #d1d5db;
+            --gray-100: #f3f4f6;
+            --white: #ffffff;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Noto Sans TC', -apple-system, sans-serif; color: var(--gray-700); line-height: 1.7; background: var(--white); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        section { padding: 80px 0; }
+
+        /* Nav */
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--gray-300); transition: box-shadow .3s; }
+        nav.scrolled { box-shadow: var(--shadow); }
+        .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .nav-logo { font-size: 1.2rem; font-weight: 700; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .nav-logo svg { width: 28px; height: 28px; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a { color: var(--gray-700); text-decoration: none; font-size: .9rem; font-weight: 500; transition: color .2s; }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-cta { background: var(--primary) !important; color: var(--white) !important; padding: 8px 20px !important; border-radius: 8px; font-weight: 600 !important; transition: background .2s !important; }
+        .nav-cta:hover { background: var(--primary-dark) !important; }
+        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; color: var(--gray-700); }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; text-decoration: none; transition: all .25s; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary); color: var(--white); box-shadow: 0 4px 14px rgba(6,199,85,.35); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6,199,85,.4); }
+        .btn-outline { background: var(--white); color: var(--gray-700); border: 2px solid var(--gray-300); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Section titles */
+        .section-title { text-align: center; margin-bottom: 48px; }
+        .section-title h2 { font-size: 2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 12px; }
+        .section-title p { color: var(--gray-500); font-size: 1.05rem; }
+
+        /* Hero */
+        .hero { padding-top: 140px; padding-bottom: 60px; background: linear-gradient(165deg, var(--white) 50%, var(--primary-light) 100%); text-align: center; }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: var(--gray-900); line-height: 1.3; margin-bottom: 20px; }
+        .hero h1 .hl { color: var(--primary); position: relative; }
+        .hero h1 .hl::after { content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 8px; background: rgba(6,199,85,.2); border-radius: 4px; }
+        .hero p { font-size: 1.15rem; color: var(--gray-500); max-width: 600px; margin: 0 auto 36px; }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat .num { font-size: 2rem; font-weight: 900; color: var(--primary); }
+        .hero-stat .label { font-size: .85rem; color: var(--gray-500); }
+
+        /* ============================================
+           ANIMATED DEMO
+           ============================================ */
+        .demo-container {
+            max-width: 900px;
+            margin: 56px auto 0;
+            background: var(--gray-900);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+        }
+        .demo-topbar {
+            background: #0d1117;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .demo-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .demo-dot.r { background: #ff5f57; }
+        .demo-dot.y { background: #ffbd2e; }
+        .demo-dot.g { background: #28ca41; }
+        .demo-topbar span { color: var(--gray-500); font-size: .75rem; margin-left: 12px; }
+
+        .demo-body {
+            display: flex;
+            min-height: 420px;
+            position: relative;
+        }
+
+        /* LEFT: LINE chat simulation */
+        .demo-chat {
+            width: 320px;
+            background: #7494b8;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .demo-chat-header {
+            background: rgba(0,0,0,.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: .8rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .chat-bubble {
+            max-width: 240px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: .85rem;
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: bubbleIn .5s ease forwards;
+        }
+        .chat-bubble.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.photo {
+            background: #e8e8e8;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            padding: 8px;
+        }
+        .chat-bubble.photo .photo-inner {
+            background: #c4c4c4;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: .75rem;
+        }
+        .chat-sender {
+            font-size: .7rem;
+            color: rgba(255,255,255,.7);
+            align-self: flex-end;
+            opacity: 0;
+            animation: bubbleIn .3s ease forwards;
+        }
+
+        /* Delay classes */
+        .d0 { animation-delay: .5s; }
+        .d1 { animation-delay: 1.2s; }
+        .d2 { animation-delay: 2s; }
+        .d3 { animation-delay: 2.8s; }
+        .d4 { animation-delay: 3.5s; }
+        .d5 { animation-delay: 4.2s; }
+        .d6 { animation-delay: 5s; }
+        .d7 { animation-delay: 5.8s; }
+        .d8 { animation-delay: 6.5s; }
+        .d9 { animation-delay: 7.2s; }
+
+        @keyframes bubbleIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* RIGHT: Review GUI simulation */
+        .demo-gui {
+            flex: 1;
+            background: #1e1e2e;
+            display: flex;
+            flex-direction: column;
+        }
+        .demo-gui-header {
+            background: #161625;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        .demo-gui-header .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+        .demo-gui-header span { color: var(--gray-500); font-size: .75rem; }
+
+        .demo-gui-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Processing animation */
+        .demo-processing {
+            text-align: center;
+            padding: 24px;
+            opacity: 0;
+            animation: fadeIn .5s ease forwards;
+            animation-delay: 3.5s;
+        }
+        .demo-processing .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid #2a2a3e;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        .demo-processing span { color: var(--gray-500); font-size: .8rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Result table */
+        .demo-result {
+            opacity: 0;
+            animation: fadeIn .6s ease forwards;
+            animation-delay: 5.5s;
+        }
+        .demo-result-label {
+            color: var(--primary);
+            font-size: .75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .demo-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .78rem;
+        }
+        .demo-table th {
+            background: #2a2a3e;
+            color: var(--gray-300);
+            padding: 6px 10px;
+            text-align: left;
+            font-weight: 500;
+        }
+        .demo-table td {
+            padding: 8px 10px;
+            color: #e0e0e0;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        .demo-table .match { color: var(--primary); font-size: .7rem; }
+        .demo-table .fuzzy { color: var(--warning); font-size: .7rem; }
+
+        .demo-meta {
+            display: flex;
+            gap: 16px;
+            opacity: 0;
+            animation: fadeIn .5s ease forwards;
+            animation-delay: 5.8s;
+        }
+        .demo-meta-item {
+            background: #2a2a3e;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: .75rem;
+        }
+        .demo-meta-item .lbl { color: var(--gray-500); }
+        .demo-meta-item .val { color: #e0e0e0; font-weight: 600; }
+
+        /* Approve button animation */
+        .demo-approve {
+            opacity: 0;
+            animation: fadeIn .5s ease forwards;
+            animation-delay: 7s;
+            text-align: right;
+        }
+        .demo-approve-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 6px;
+            font-size: .85rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        .demo-approve-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+            animation: btnShine 2s ease infinite;
+            animation-delay: 8s;
+        }
+        @keyframes btnShine { 0% { left: -100%; } 50% { left: 100%; } 100% { left: 100%; } }
+
+        .demo-done {
+            opacity: 0;
+            animation: fadeIn .5s ease forwards;
+            animation-delay: 8.5s;
+            text-align: center;
+            padding: 8px;
+        }
+        .demo-done span {
+            color: var(--primary);
+            font-size: .85rem;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Replay button */
+        .demo-replay {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            color: var(--gray-500);
+            font-size: .75rem;
+            cursor: pointer;
+            opacity: 0;
+            animation: fadeIn .5s ease forwards;
+            animation-delay: 9.5s;
+            z-index: 10;
+            background: rgba(0,0,0,.5);
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+        .demo-replay:hover { color: var(--primary); }
+
+        /* Pain points */
+        .pain { background: var(--gray-100); }
+        .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .pain-card { background: var(--white); padding: 32px; border-radius: var(--radius); box-shadow: var(--shadow); border-left: 4px solid var(--danger); }
+        .pain-card .icon { font-size: 2rem; margin-bottom: 12px; }
+        .pain-card h3 { font-size: 1.1rem; color: var(--gray-900); margin-bottom: 8px; }
+        .pain-card p { font-size: .95rem; color: var(--gray-500); }
+
+        /* Features */
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+        .feature-card { padding: 36px; border-radius: var(--radius); background: var(--white); border: 1px solid var(--gray-300); transition: all .3s; }
+        .feature-card:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+        .feature-icon { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 20px; }
+        .feature-icon.green { background: var(--primary-light); }
+        .feature-icon.blue { background: #e0edff; }
+        .feature-icon.orange { background: #fef3cd; }
+        .feature-card h3 { font-size: 1.2rem; color: var(--gray-900); margin-bottom: 10px; }
+        .feature-card p { color: var(--gray-500); font-size: .95rem; }
+
+        /* Screenshots */
+        .screenshots { background: var(--gray-100); }
+        .screenshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; }
+        .screenshot-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); }
+        .screenshot-img { background: #1e1e2e; padding: 20px; min-height: 220px; position: relative; }
+        .screenshot-caption { padding: 16px 20px; }
+        .screenshot-caption h3 { font-size: 1rem; color: var(--gray-900); margin-bottom: 4px; }
+        .screenshot-caption p { font-size: .85rem; color: var(--gray-500); }
+
+        /* Mock GUI elements inside screenshots */
+        .mock-row { display: flex; gap: 8px; margin-bottom: 6px; }
+        .mock-cell { padding: 5px 8px; font-size: .7rem; border-radius: 3px; }
+        .mock-cell.header { background: #2a2a3e; color: var(--gray-300); font-weight: 600; }
+        .mock-cell.data { background: #252535; color: #ddd; }
+        .mock-cell.green-tag { background: rgba(6,199,85,.15); color: var(--primary); font-size: .65rem; }
+        .mock-cell.yellow-tag { background: rgba(245,158,11,.15); color: var(--warning); font-size: .65rem; }
+        .mock-sidebar { width: 140px; background: #161625; border-radius: 6px; padding: 8px; }
+        .mock-sidebar-item { padding: 5px 8px; font-size: .65rem; color: var(--gray-500); border-radius: 4px; margin-bottom: 3px; cursor: default; }
+        .mock-sidebar-item.active { background: var(--primary); color: white; }
+        .mock-sidebar-item .badge { float: right; background: var(--danger); color: white; border-radius: 8px; padding: 0 5px; font-size: .6rem; }
+        .mock-btn { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: .7rem; font-weight: 600; }
+        .mock-btn.primary { background: var(--primary); color: white; }
+        .mock-btn.outline { border: 1px solid var(--gray-500); color: var(--gray-500); }
+        .mock-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .6rem; font-weight: 600; }
+        .mock-status.reviewing { background: rgba(74,144,217,.15); color: var(--accent); }
+        .mock-status.approved { background: rgba(6,199,85,.15); color: var(--primary); }
+
+        /* Comparison */
+        .compare { background: var(--gray-100); }
+        .compare-table { max-width: 700px; margin: 0 auto; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); }
+        .compare-table table { width: 100%; border-collapse: collapse; background: var(--white); }
+        .compare-table th, .compare-table td { padding: 16px 24px; text-align: left; font-size: .95rem; }
+        .compare-table thead th { background: var(--gray-900); color: var(--white); font-weight: 600; }
+        .compare-table thead th:last-child { background: var(--primary); }
+        .compare-table tbody tr:nth-child(even) { background: var(--gray-100); }
+        .compare-table .old { color: var(--danger); }
+        .compare-table .new { color: var(--primary); font-weight: 600; }
+
+        /* How it works */
+        .steps { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+        .step { flex: 1; min-width: 220px; max-width: 280px; text-align: center; position: relative; }
+        .step-num { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: var(--white); font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .step h3 { font-size: 1.1rem; color: var(--gray-900); margin-bottom: 8px; }
+        .step p { font-size: .9rem; color: var(--gray-500); }
+        .step-arrow { position: absolute; right: -24px; top: 24px; color: var(--gray-300); font-size: 1.5rem; }
+
+        /* Industries */
+        .industries { background: var(--gray-100); }
+        .industry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .industry-card { background: var(--white); padding: 24px; border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); transition: all .2s; }
+        .industry-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .industry-card .icon { font-size: 2.2rem; margin-bottom: 12px; }
+        .industry-card h3 { font-size: 1rem; color: var(--gray-900); margin-bottom: 6px; }
+        .industry-card p { font-size: .85rem; color: var(--gray-500); }
+
+        /* Pricing */
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; max-width: 900px; margin: 0 auto; }
+        .price-card { background: var(--white); border: 2px solid var(--gray-300); border-radius: var(--radius); padding: 36px; text-align: center; position: relative; transition: all .3s; }
+        .price-card.popular { border-color: var(--primary); box-shadow: var(--shadow-xl); transform: scale(1.03); }
+        .price-card.popular::before { content: '最多人選擇'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--white); padding: 4px 16px; border-radius: 20px; font-size: .8rem; font-weight: 600; }
+        .price-card h3 { font-size: 1.3rem; color: var(--gray-900); margin-bottom: 8px; }
+        .price-card .price { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 16px 0; }
+        .price-card .price span { font-size: 1rem; font-weight: 400; color: var(--gray-500); }
+        .price-card ul { list-style: none; text-align: left; margin: 24px 0; }
+        .price-card ul li { padding: 8px 0; font-size: .95rem; color: var(--gray-700); display: flex; align-items: center; gap: 8px; }
+        .price-card ul li::before { content: '\2713'; color: var(--primary); font-weight: 700; }
+
+        /* FAQ */
+        .faq { background: var(--gray-100); }
+        .faq-list { max-width: 700px; margin: 0 auto; }
+        .faq-item { background: var(--white); border-radius: var(--radius); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+        .faq-q { padding: 20px 24px; font-weight: 600; color: var(--gray-900); cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .faq-q::after { content: '+'; font-size: 1.3rem; color: var(--gray-500); transition: transform .3s; }
+        .faq-item.open .faq-q::after { transform: rotate(45deg); }
+        .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
+        .faq-item.open .faq-a { max-height: 300px; padding: 0 24px 20px; }
+        .faq-a p { color: var(--gray-500); font-size: .95rem; }
+
+        /* CTA */
+        .cta-section { background: linear-gradient(135deg, var(--gray-900) 0%, #16213e 100%); text-align: center; color: var(--white); }
+        .cta-section h2 { font-size: 2rem; font-weight: 800; margin-bottom: 16px; }
+        .cta-section p { color: var(--gray-300); margin-bottom: 32px; font-size: 1.1rem; }
+        .form-input { width: 100%; padding: 14px 16px; border: 1px solid rgba(255,255,255,.2); border-radius: 8px; background: rgba(255,255,255,.1); color: white; font-size: 1rem; outline: none; font-family: inherit; margin-bottom: 16px; }
+        .form-input::placeholder { color: rgba(255,255,255,.4); }
+        .form-input:focus { border-color: var(--primary); }
+        select.form-input { appearance: none; -webkit-appearance: none; }
+        select.form-input option { background: var(--gray-900); color: white; }
+
+        /* Footer */
+        footer { background: var(--gray-900); color: var(--gray-500); padding: 32px 0; text-align: center; font-size: .85rem; }
+        footer a { color: var(--gray-300); text-decoration: none; }
+        footer a:hover { color: var(--primary); }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            section { padding: 56px 0; }
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--white); padding: 20px; border-bottom: 1px solid var(--gray-300); box-shadow: var(--shadow-lg); }
+            .hamburger { display: block; }
+            .hero-stats { gap: 24px; }
+            .step-arrow { display: none; }
+            .price-card.popular { transform: none; }
+            .demo-body { flex-direction: column; }
+            .demo-chat { width: 100%; min-height: 240px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav id="navbar">
+    <div class="nav-inner">
+        <a href="#" class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+            智慧接單助手
+        </a>
+        <div class="nav-links" id="navLinks">
+            <a href="#demo">Demo</a>
+            <a href="#features">功能</a>
+            <a href="#screenshots">畫面</a>
+            <a href="#pricing">方案</a>
+            <a href="#faq">FAQ</a>
+            <a href="#cta" class="nav-cta">免費試用</a>
+        </div>
+        <div class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <h1>客戶用 LINE 下單<br><span class="hl">AI 自動幫你整理成訂單</span></h1>
+        <p>不用改變客戶習慣，不用教他們用新系統。<br>每天省 2-3 小時人工抄單時間，漏單率降到零。</p>
+        <div class="hero-buttons">
+            <a href="#cta" class="btn btn-primary">免費試用 14 天</a>
+            <a href="#demo" class="btn btn-outline">看 Demo 動畫</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="num">3 秒</div><div class="label">訊息解析速度</div></div>
+            <div class="hero-stat"><div class="num">95%+</div><div class="label">AI 辨識準確率</div></div>
+            <div class="hero-stat"><div class="num">0</div><div class="label">漏單率</div></div>
+            <div class="hero-stat"><div class="num">2hr+</div><div class="label">每日節省時間</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ANIMATED DEMO -->
+<section id="demo" style="padding:40px 0 80px; background: linear-gradient(180deg, var(--primary-light) 0%, var(--white) 100%);">
+    <div class="container">
+        <div class="section-title">
+            <h2>60 秒看懂怎麼運作</h2>
+            <p>左邊是 LINE 群組，右邊是審核系統 — 全自動</p>
+        </div>
+        <div class="demo-container" id="demoBox">
+            <div class="demo-topbar">
+                <div class="demo-dot r"></div>
+                <div class="demo-dot y"></div>
+                <div class="demo-dot g"></div>
+                <span>LINE 智慧接單助手 — 即時 Demo</span>
+            </div>
+            <div class="demo-body">
+                <!-- LEFT: LINE chat -->
+                <div class="demo-chat" id="demoChat">
+                    <div class="demo-chat-header">LINE 群組「老王食材訂貨」</div>
+                    <div class="chat-sender d0">王記餐廳</div>
+                    <div class="chat-bubble user d1">下單 明天<br>雞腿 10包<br>豬排 5kg<br>高麗菜 3顆</div>
+                    <div class="chat-sender d3">阿明小吃</div>
+                    <div class="chat-bubble photo d4">
+                        <div class="photo-inner">
+                            &#128248; 手寫訂單照片<br><span style="font-size:.65rem;color:#999;">3/29 白蘿蔔20斤 豆腐10盒...</span>
+                        </div>
+                    </div>
+                    <div class="chat-sender d6">大華便當</div>
+                    <div class="chat-bubble user d7" style="font-size:.8rem;">下單 3/30<br>排骨 8kg 五花肉 3斤<br>青菜 5把 白飯 20碗</div>
+                </div>
+
+                <!-- RIGHT: Review GUI -->
+                <div class="demo-gui">
+                    <div class="demo-gui-header">
+                        <div class="status-dot"></div>
+                        <span>審核系統 — 已連線</span>
+                    </div>
+                    <div class="demo-gui-content">
+                        <div class="demo-processing">
+                            <div class="spinner"></div>
+                            <span>AI 解析中...</span>
+                        </div>
+
+                        <div class="demo-result">
+                            <div class="demo-result-label">&#9989; 解析完成 — 王記餐廳</div>
+                            <table class="demo-table">
+                                <tr><th>品名</th><th>數量</th><th>單位</th><th>料號</th><th>比對</th></tr>
+                                <tr><td>雞腿</td><td>10</td><td>包</td><td>M-0142</td><td class="match">完全符合</td></tr>
+                                <tr><td>豬排</td><td>5</td><td>kg</td><td>M-0087</td><td class="match">完全符合</td></tr>
+                                <tr><td>高麗菜</td><td>3</td><td>顆</td><td>V-0023</td><td class="fuzzy">近似符合</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="demo-meta">
+                            <div class="demo-meta-item"><span class="lbl">配送日</span> <span class="val">2026/03/29</span></div>
+                            <div class="demo-meta-item"><span class="lbl">客戶</span> <span class="val">王記餐廳</span></div>
+                            <div class="demo-meta-item"><span class="lbl">信心度</span> <span class="val" style="color:var(--primary);">96%</span></div>
+                        </div>
+
+                        <div class="demo-approve">
+                            <div class="demo-approve-btn">&#10003; 確認入庫</div>
+                        </div>
+
+                        <div class="demo-done">
+                            <span>&#127881; 訂單已寫入系統！自動跳到下一筆...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-replay" onclick="replayDemo()">&#8635; 重播</div>
+        </div>
+    </div>
+</section>
+
+<!-- Pain Points -->
+<section class="pain" id="pain">
+    <div class="container">
+        <div class="section-title"><h2>你是不是每天都在...</h2><p>這些痛點，我們都幫你解決了</p></div>
+        <div class="pain-grid">
+            <div class="pain-card"><div class="icon">&#128221;</div><h3>從 LINE 群組一筆一筆抄訂單</h3><p>客戶在群組裡東一則西一則，你得翻聊天記錄整理，花上 2-3 小時。</p></div>
+            <div class="pain-card"><div class="icon">&#128248;</div><h3>看手寫照片 key 半天還 key 錯</h3><p>手寫字看不清楚，品名對不上料號，每天都在猜字。</p></div>
+            <div class="pain-card"><div class="icon">&#128561;</div><h3>漏單被客戶罵</h3><p>訊息太多容易遺漏，客戶打電話來問「我的單呢？」</p></div>
+            <div class="pain-card"><div class="icon">&#128337;</div><h3>凌晨訂單沒人處理</h3><p>客戶半夜傳訂單，早上才看到，備貨來不及。</p></div>
+            <div class="pain-card"><div class="icon">&#128176;</div><h3>請人抄單成本太高</h3><p>多請一個人光處理 LINE 訂單，月薪 3 萬起跳。</p></div>
+            <div class="pain-card"><div class="icon">&#128683;</div><h3>客戶不願意改用新系統</h3><p>試過線上訂貨平台，但客戶覺得麻煩，又改回 LINE。</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+    <div class="container">
+        <div class="section-title"><h2>三大核心功能</h2><p>從接收訂單到寫入系統，全自動完成</p></div>
+        <div class="features-grid">
+            <div class="feature-card"><div class="feature-icon green">&#128172;</div><h3>文字訊息自動解析</h3><p>客戶在 LINE 打「明天 雞腿10包 豬排5kg」，AI 自動辨識品名、數量、單位、配送日期。支援中文數字和各種格式。</p></div>
+            <div class="feature-card"><div class="feature-icon blue">&#128247;</div><h3>手寫訂單照片 OCR</h3><p>客戶傳手寫單照片，AI 圖片辨識自動轉成結構化訂單。歪斜、模糊都能處理，不確定的會標記讓你人工確認。</p></div>
+            <div class="feature-card"><div class="feature-icon orange">&#9989;</div><h3>一鍵核准寫入系統</h3><p>解析結果自動比對你的商品目錄，找到對應料號。審核人員確認無誤後一鍵核准，直接寫入 ERP 訂單系統。</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- Screenshots -->
+<section class="screenshots" id="screenshots">
+    <div class="container">
+        <div class="section-title"><h2>系統實際畫面</h2><p>桌面審核 App，操作直覺</p></div>
+        <div class="screenshot-grid">
+            <!-- Screenshot 1: Message List -->
+            <div class="screenshot-card">
+                <div class="screenshot-img">
+                    <div style="display:flex;gap:10px;">
+                        <div class="mock-sidebar">
+                            <div class="mock-sidebar-item active">待審核 <span class="badge">12</span></div>
+                            <div class="mock-sidebar-item">已核准</div>
+                            <div class="mock-sidebar-item">全部訊息</div>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="mock-row"><div class="mock-cell header" style="flex:1;">訊息</div><div class="mock-cell header" style="width:60px;">狀態</div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:1;background:#1a3a2a;">王記餐廳 — 雞腿10包 豬排5kg...</div><div class="mock-cell data" style="width:60px;"><span class="mock-status reviewing">審核中</span></div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:1;">阿明小吃 — [手寫訂單照片]</div><div class="mock-cell data" style="width:60px;"><span class="mock-status reviewing">審核中</span></div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:1;">大華便當 — 排骨8kg 五花肉3斤</div><div class="mock-cell data" style="width:60px;"><span class="mock-status reviewing">審核中</span></div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:1;opacity:.5;">李家麵店 — 油麵20斤 豬骨5斤</div><div class="mock-cell data" style="width:60px;"><span class="mock-status approved">已核准</span></div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screenshot-caption"><h3>訊息列表</h3><p>即時顯示所有 LINE 訂單，狀態篩選、批次操作</p></div>
+            </div>
+
+            <!-- Screenshot 2: Draft Detail -->
+            <div class="screenshot-card">
+                <div class="screenshot-img">
+                    <div style="margin-bottom:10px;"><span style="color:var(--gray-300);font-size:.75rem;font-weight:600;">草稿詳情 — 王記餐廳</span></div>
+                    <div class="demo-meta" style="opacity:1;animation:none;margin-bottom:12px;">
+                        <div class="demo-meta-item"><span class="lbl">配送日</span> <span class="val">2026/03/29</span></div>
+                        <div class="demo-meta-item"><span class="lbl">客戶編號</span> <span class="val">C-0042</span></div>
+                    </div>
+                    <div class="mock-row"><div class="mock-cell header" style="width:30px;">#</div><div class="mock-cell header" style="flex:2;">品名</div><div class="mock-cell header" style="flex:1;">數量</div><div class="mock-cell header" style="flex:1;">單位</div><div class="mock-cell header" style="flex:1;">料號</div><div class="mock-cell header" style="flex:1;">比對</div></div>
+                    <div class="mock-row"><div class="mock-cell data" style="width:30px;">1</div><div class="mock-cell data" style="flex:2;">雞腿</div><div class="mock-cell data" style="flex:1;">10</div><div class="mock-cell data" style="flex:1;">包</div><div class="mock-cell data" style="flex:1;">M-0142</div><div class="mock-cell green-tag" style="flex:1;">完全符合</div></div>
+                    <div class="mock-row"><div class="mock-cell data" style="width:30px;">2</div><div class="mock-cell data" style="flex:2;">豬排</div><div class="mock-cell data" style="flex:1;">5</div><div class="mock-cell data" style="flex:1;">kg</div><div class="mock-cell data" style="flex:1;">M-0087</div><div class="mock-cell green-tag" style="flex:1;">完全符合</div></div>
+                    <div class="mock-row"><div class="mock-cell data" style="width:30px;">3</div><div class="mock-cell data" style="flex:2;">高麗菜</div><div class="mock-cell data" style="flex:1;">3</div><div class="mock-cell data" style="flex:1;">顆</div><div class="mock-cell data" style="flex:1;">V-0023</div><div class="mock-cell yellow-tag" style="flex:1;">近似符合</div></div>
+                    <div style="margin-top:12px;text-align:right;">
+                        <span class="mock-btn outline" style="margin-right:6px;">儲存草稿</span>
+                        <span class="mock-btn primary">確認入庫</span>
+                    </div>
+                </div>
+                <div class="screenshot-caption"><h3>草稿編輯 & 品項比對</h3><p>AI 自動比對料品目錄，綠色=完全符合，黃色=需確認</p></div>
+            </div>
+
+            <!-- Screenshot 3: Image OCR -->
+            <div class="screenshot-card">
+                <div class="screenshot-img">
+                    <div style="display:flex;gap:12px;">
+                        <div style="width:45%;background:#2a2a3e;border-radius:6px;padding:12px;text-align:center;">
+                            <div style="color:var(--gray-500);font-size:.7rem;margin-bottom:8px;">原始照片</div>
+                            <div style="background:#3a3a4e;border-radius:4px;padding:20px 10px;color:#888;font-size:.75rem;line-height:1.8;">
+                                &#128248;<br>
+                                <span style="font-family:serif;font-style:italic;">3/29 出貨<br>白蘿蔔 20斤<br>豆腐 10盒<br>蔥 5把<br>薑 2斤</span>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="color:var(--primary);font-size:.7rem;font-weight:600;margin-bottom:8px;">&#9889; AI 辨識結果</div>
+                            <div class="mock-row"><div class="mock-cell header" style="flex:2;">品名</div><div class="mock-cell header" style="flex:1;">數量</div><div class="mock-cell header" style="flex:1;">單位</div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:2;">白蘿蔔</div><div class="mock-cell data" style="flex:1;">20</div><div class="mock-cell data" style="flex:1;">斤</div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:2;">豆腐</div><div class="mock-cell data" style="flex:1;">10</div><div class="mock-cell data" style="flex:1;">盒</div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:2;">蔥</div><div class="mock-cell data" style="flex:1;">5</div><div class="mock-cell data" style="flex:1;">把</div></div>
+                            <div class="mock-row"><div class="mock-cell data" style="flex:2;">薑</div><div class="mock-cell data" style="flex:1;">2</div><div class="mock-cell data" style="flex:1;">斤</div></div>
+                            <div style="margin-top:8px;color:var(--gray-500);font-size:.65rem;">信心度：93% | 配送日：2026/03/29</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screenshot-caption"><h3>圖片 OCR 辨識</h3><p>手寫訂單照片自動轉為結構化資料，支援歪斜、模糊</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section id="how" style="background:var(--white);">
+    <div class="container">
+        <div class="section-title"><h2>四步驟，搞定一切</h2></div>
+        <div class="steps">
+            <div class="step"><div class="step-num">1</div><h3>客戶在 LINE 下單</h3><p>文字、照片、檔案都行<br>不需改變任何習慣</p><span class="step-arrow">&#10132;</span></div>
+            <div class="step"><div class="step-num">2</div><h3>AI 自動解析</h3><p>3 秒辨識品名、數量<br>自動比對你的料品目錄</p><span class="step-arrow">&#10132;</span></div>
+            <div class="step"><div class="step-num">3</div><h3>人工審核</h3><p>桌面 App 即時顯示<br>有問題才需要修改</p><span class="step-arrow">&#10132;</span></div>
+            <div class="step"><div class="step-num">4</div><h3>寫入系統</h3><p>一鍵核准<br>自動寫入 ERP 訂單</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison -->
+<section class="compare">
+    <div class="container">
+        <div class="section-title"><h2>導入前 vs 導入後</h2></div>
+        <div class="compare-table">
+            <table>
+                <thead><tr><th>項目</th><th>導入前</th><th>導入後</th></tr></thead>
+                <tbody>
+                    <tr><td>每日處理時間</td><td class="old">2-3 小時手抄</td><td class="new">15 分鐘審核</td></tr>
+                    <tr><td>漏單率</td><td class="old">3-5%</td><td class="new">0%</td></tr>
+                    <tr><td>KEY 單錯誤率</td><td class="old">5-10%</td><td class="new">&lt; 1%</td></tr>
+                    <tr><td>處理速度</td><td class="old">收到後 1-2 小時</td><td class="new">收到後 3 秒</td></tr>
+                    <tr><td>客戶體驗</td><td class="old">需學新系統</td><td class="new">照常用 LINE</td></tr>
+                    <tr><td>月成本</td><td class="old">人力 NT$30,000+</td><td class="new">NT$3,000 起</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Industries -->
+<section class="industries">
+    <div class="container">
+        <div class="section-title"><h2>適合哪些產業？</h2><p>只要客戶習慣用 LINE 下單，我們都能幫你</p></div>
+        <div class="industry-grid">
+            <div class="industry-card"><div class="icon">&#127830;</div><h3>食品批發</h3><p>每天幾十筆 LINE 訂單</p></div>
+            <div class="industry-card"><div class="icon">&#129385;</div><h3>生鮮供應</h3><p>凌晨訂單即時處理</p></div>
+            <div class="industry-card"><div class="icon">&#127838;</div><h3>烘焙經銷</h3><p>品項多、規格複雜</p></div>
+            <div class="industry-card"><div class="icon">&#127854;</div><h3>餐廳食材</h3><p>多家餐廳每日下單</p></div>
+            <div class="industry-card"><div class="icon">&#127806;</div><h3>農產行口</h3><p>手寫單照片 OCR</p></div>
+            <div class="industry-card"><div class="icon">&#127981;</div><h3>小型製造</h3><p>客戶用 LINE 叫貨</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing">
+    <div class="container">
+        <div class="section-title"><h2>方案與價格</h2><p>所有方案皆含 14 天免費試用，不滿意不收費</p></div>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>基本版</h3><p style="color:var(--gray-500)">適合小型供應商</p>
+                <div class="price">NT$3,000<span>/月</span></div>
+                <ul><li>1 個 LINE 群組</li><li>每月 500 筆訂單</li><li>文字訊息解析</li><li>審核桌面 App</li><li>Email 支援</li></ul>
+                <a href="#cta" class="btn btn-outline" style="width:100%;justify-content:center;">開始試用</a>
+            </div>
+            <div class="price-card popular">
+                <h3>專業版</h3><p style="color:var(--gray-500)">適合中型批發商</p>
+                <div class="price">NT$8,000<span>/月</span></div>
+                <ul><li>5 個 LINE 群組</li><li>每月 2,000 筆訂單</li><li>文字 + 圖片 OCR</li><li>商品目錄自動比對</li><li>ERP 系統串接</li><li>LINE 即時客服</li></ul>
+                <a href="#cta" class="btn btn-primary" style="width:100%;justify-content:center;">開始試用</a>
+            </div>
+            <div class="price-card">
+                <h3>企業版</h3><p style="color:var(--gray-500)">適合大型企業</p>
+                <div class="price">面議</div>
+                <ul><li>無限 LINE 群組</li><li>無限訂單數量</li><li>自訂品項目錄</li><li>專屬伺服器部署</li><li>客製化開發</li><li>專屬客戶經理</li></ul>
+                <a href="#cta" class="btn btn-outline" style="width:100%;justify-content:center;">聯絡我們</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+    <div class="container">
+        <div class="section-title"><h2>常見問題</h2></div>
+        <div class="faq-list">
+            <div class="faq-item"><div class="faq-q">需要改變客戶的下單習慣嗎？</div><div class="faq-a"><p>完全不用。客戶繼續在 LINE 群組用文字或照片下單，和以前一模一樣。所有改變只發生在你這端。</p></div></div>
+            <div class="faq-item"><div class="faq-q">AI 辨識準確率如何？</div><div class="faq-a"><p>文字訊息準確率 98% 以上，圖片手寫單約 90-95%。辨識不確定的品項會自動標記，由你人工確認，不會自動放行有疑慮的訂單。</p></div></div>
+            <div class="faq-item"><div class="faq-q">可以串接我現有的 ERP 系統嗎？</div><div class="faq-a"><p>可以。專業版以上支援 ERP 串接，常見系統（鼎新、正航、Odoo、自建系統）都能整合。</p></div></div>
+            <div class="faq-item"><div class="faq-q">資料安全嗎？</div><div class="faq-a"><p>資料存在你自己的伺服器或加密雲端。企業版可完全自建部署，資料不離開你的公司。全程 HTTPS 加密。</p></div></div>
+            <div class="faq-item"><div class="faq-q">免費試用要綁信用卡嗎？</div><div class="faq-a"><p>不用。14 天完全免費，不需信用卡。試用結束不續約就自動停止，不會被扣款。</p></div></div>
+            <div class="faq-item"><div class="faq-q">設定要多久？</div><div class="faq-a"><p>基本版約 30 分鐘即可上線。專業版含 ERP 串接約 1-3 個工作天。我們協助你完成所有設定。</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+    <div class="container">
+        <h2>準備好告別手抄訂單了嗎？</h2>
+        <p>14 天免費試用，不滿意不收錢。<br>留下聯絡方式，我們會在 1 個工作天內與你聯繫。</p>
+        <form id="contactForm" action="https://formspree.io/f/s900567@yahoo.com.tw" method="POST" style="max-width:480px;margin:0 auto;text-align:left;">
+            <input type="text" name="company" placeholder="公司名稱" required class="form-input">
+            <input type="text" name="name" placeholder="您的姓名" required class="form-input">
+            <input type="tel" name="phone" placeholder="手機號碼" required class="form-input">
+            <input type="email" name="email" placeholder="Email（選填）" class="form-input">
+            <select name="industry" required class="form-input">
+                <option value="" disabled selected>產業類別</option>
+                <option value="food">食品批發</option>
+                <option value="fresh">生鮮供應</option>
+                <option value="bakery">烘焙經銷</option>
+                <option value="restaurant">餐廳食材</option>
+                <option value="agriculture">農產行口</option>
+                <option value="manufacturing">製造業</option>
+                <option value="other">其他</option>
+            </select>
+            <textarea name="message" placeholder="補充說明（選填，例如：每天大約幾筆訂單？）" class="form-input" style="height:80px;resize:vertical;"></textarea>
+            <input type="hidden" name="_subject" value="[官網] 新的免費試用申請">
+            <input type="hidden" name="_next" value="">
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;font-size:1.1rem;">立即免費試用</button>
+            <p style="text-align:center;color:var(--gray-500);font-size:.8rem;margin-top:12px;">
+                或直接來信：<a href="mailto:s900567@yahoo.com.tw" style="color:var(--primary);">s900567@yahoo.com.tw</a>
+            </p>
+        </form>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <p>&copy; 2026 LINE 智慧接單助手</p>
+        <p style="margin-top:8px;"><a href="mailto:s900567@yahoo.com.tw">s900567@yahoo.com.tw</a></p>
+    </div>
+</footer>
+
+<script>
+// Nav scroll
+window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// FAQ toggle
+document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+});
+
+// Form submit
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const data = new FormData(form);
+
+    // Send via mailto fallback (Formspree needs account setup)
+    const body = Array.from(data.entries()).map(([k,v]) => `${k}: ${v}`).join('\n');
+    const subject = encodeURIComponent('[官網] 免費試用申請');
+    const mailBody = encodeURIComponent(body);
+    window.location.href = `mailto:s900567@yahoo.com.tw?subject=${subject}&body=${mailBody}`;
+
+    // Show thank you
+    form.innerHTML = '<div style="text-align:center;padding:40px 0;"><div style="font-size:3rem;margin-bottom:16px;">&#127881;</div><h3 style="color:white;margin-bottom:8px;">感謝您的申請！</h3><p style="color:var(--gray-300);">我們會在 1 個工作天內與您聯繫。</p></div>';
+});
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({behavior:'smooth'}); document.getElementById('navLinks').classList.remove('open'); }
+    });
+});
+
+// Demo replay
+function replayDemo() {
+    const box = document.getElementById('demoBox');
+    const clone = box.cloneNode(true);
+    clone.querySelector('.demo-replay').setAttribute('onclick', 'replayDemo()');
+    box.parentNode.replaceChild(clone, box);
+    // Re-bind FAQ since we didn't touch those
+}
+
+// Auto-replay demo when scrolled into view
+let demoPlayed = false;
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting && demoPlayed) {
+            replayDemo();
+        }
+        if (entry.isIntersecting) demoPlayed = true;
+    });
+}, { threshold: 0.3 });
+observer.observe(document.getElementById('demoBox'));
+</script>
+</body>
+</html>
